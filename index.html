@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flight Test Tracker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6fa;--card:#fff;--tx:#1b2333;--mu:#6b7690;--ac:#2563eb;--bd:#dde3ee}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161f;--card:#1b2130;--tx:#e8ecf5;--mu:#93a0ba;--ac:#5b8def;--bd:#2c3547}}
+:root[data-theme="dark"]{--bg:#12161f;--card:#1b2130;--tx:#e8ecf5;--mu:#93a0ba;--ac:#5b8def;--bd:#2c3547}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+button.g{background:transparent;color:var(--ac);border:1px solid var(--bd)}
+button.d{background:#dc2626}
+input,select,textarea{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;width:100%}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+.login{max-width:340px;margin:12vh auto}
+.login>*{margin-bottom:10px}
+nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 14px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+nav b{margin-right:auto}
+nav button.on{background:var(--ac);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.stat{font-size:34px;font-weight:700;color:var(--ac)}
+.mu{color:var(--mu);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.row>input{flex:1;min-width:140px}
+.bar{display:flex;align-items:center;gap:8px;margin:8px 0}
+.bar span.l{width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .f{background:var(--ac);height:22px;border-radius:5px;min-width:3px}
+.pie{width:170px;height:170px;border-radius:50%;margin:auto}
+.lg{font-size:13px;margin-top:10px}.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;max-height:65vh}
+table{border-collapse:collapse;min-width:100%}
+th,td{border:1px solid var(--bd);padding:2px;white-space:nowrap}
+th{background:var(--bg);font-size:12px;padding:6px;position:sticky;top:0}
+td input,td select{border:0;border-radius:0;min-width:110px;padding:6px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.tabs button.on{background:var(--ac);color:#fff}
+.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
+.modal>div{background:var(--card);border-radius:12px;padding:16px;max-width:700px;width:100%;max-height:80vh;overflow:auto}
+pre{white-space:pre-wrap;word-break:break-word;font-size:13px}
+.tl{border-left:3px solid var(--ac);margin-left:8px;padding-left:14px}
+.tl .n{margin-bottom:14px;position:relative}
+.tl .n:before{content:"";position:absolute;left:-22px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--ac)}
+a.lk{color:var(--ac);cursor:pointer;text-decoration:underline}
+.dd{position:relative}.dd .m{position:absolute;right:0;top:115%;background:var(--card);border:1px solid var(--bd);border-radius:10px;min-width:190px;padding:6px;display:none;z-index:8;box-shadow:0 6px 20px #0003}.dd.open .m{display:block}.dd .m button{display:block;width:100%;text-align:left;background:transparent;color:var(--tx);margin:0}.dd .m button:hover{background:var(--bg)}
+</style></head><body>
+<div id="app"></div>
+<script>
+const $=s=>document.querySelector(s);
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){alert('Storage full or unavailable')}}};
+const COLS=[["test","Test No."],["pilot","Pilot/ Copilot"],["date","Date","date"],["mode","Flight Mode (Pos/Alt/Stab)","sel",["","Pos","Alt","Stab"]],["env","Indoor/Outdoor","sel",["","Indoor","Outdoor"]],["loc","Location"],["sat","Sat count","number"],["dop","HDOP/VDOP"],["fix","GPS Fix Time (s)","number"],["bat","Battery (mAh / Cells)"],["volt","Voltage (V)","number"],["avgI","Avg Current (A)","number"],["maxI","Max Current (A)","number"],["end","Endurance (min)","number"],["dist","Dist","number"],["alt","Max Altitude (m)","number"],["stab","Stability (1–5)","sel",["","1","2","3","4","5"]],["motor","Motor Condition"],["mech","Mechanical Issues (Y/N)","sel",["","Y","N"]],["err","Errors (if any)"],["used","Components used"],["chg","Changed components"],["rem","Remarks"],["log","Log File","file"],["par","Parameters File","file"]];
+let user=LS.get('ft_session',null),db=null,tab='dash',pid=null,sid=null;
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const load=()=>{db=LS.get('ft_data_'+user,{projects:[],notes:[]})};
+const save=()=>LS.set('ft_data_'+user,db);
+const emptyRow=()=>Object.fromEntries(COLS.map(c=>[c[0],c[2]=='file'?null:'']));
+const filled=r=>Object.entries(r).some(([k,v])=>v&&k!='x');
+const count=p=>p.sheets.filter(s=>s.saved).reduce((a,s)=>a+s.rows.filter(filled).length,0);
+
+function loginView(mode='in',msg=''){
+ $('#app').innerHTML=`<div class="login card"><h2>✈ Flight Test Tracker</h2><div class="mu">${mode=='in'?'Log in to your workspace':'Create a personal account'}</div>
+ <input id="u" placeholder="Username" autocomplete="username"><input id="p" type="password" placeholder="Password" autocomplete="current-password">
+ <div style="color:#dc2626">${msg}</div><button style="width:100%" id="go">${mode=='in'?'Log in':'Sign up'}</button>
+ <button class="g" style="width:100%" id="sw">${mode=='in'?'New here? Sign up':'Have an account? Log in'}</button>
+ <div class="mu">Demo login: accounts and data are stored only in this browser.</div></div>`;
+ $('#sw').onclick=()=>loginView(mode=='in'?'up':'in');
+ $('#go').onclick=()=>{const u=$('#u').value.trim(),p=$('#p').value;if(!u||!p)return loginView(mode,'Enter username and password');
+  const acc=LS.get('ft_accounts',{});
+  if(mode=='up'){if(acc[u])return loginView(mode,'User exists');acc[u]=btoa(p);LS.set('ft_accounts',acc)}
+  else if(acc[u]!==btoa(p))return loginView(mode,'Wrong username or password');
+  user=u;LS.set('ft_session',u);load();render()};
+}
+function render(){
+ if(!user)return loginView();
+ if(!db)load();
+ const t=(k,l)=>`<button class="${tab==k?'on':'g'}" data-t="${k}">${l}</button>`;
+ $('#app').innerHTML=`<nav><b>✈ Flight Tests</b>${t('dash','Dashboard')}${t('ft','Flight Tests')}${t('notes','Notes')}<div class="dd"><button class="g" id="dd">👤 ${esc(user)} ▾</button><div class="m"><button id="cp">🔑 Change password</button><button id="out">⏻ Logout</button></div></div></nav><div class="wrap" id="main"></div>`;
+ document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;pid=null;render()});
+ $('#out').onclick=()=>{user=null;db=null;LS.set('ft_session',null);loginView()};
+ $('#dd').onclick=e=>{e.stopPropagation();$('.dd').classList.toggle('open')};
+ document.onclick=e=>{const d=$('.dd');if(d&&!d.contains(e.target))d.classList.remove('open')};
+ $('#cp').onclick=()=>{$('.dd').classList.remove('open');chpw()};
+ ({dash,ft,notes})[tab]();
+}
+function chpw(){
+ const acc=LS.get('ft_accounts',{});let cur='';try{cur=atob(acc[user]||'')}catch(e){}
+ const m=document.createElement('div');m.className='modal';
+ m.innerHTML=`<div style="max-width:380px"><h3 style="margin-top:0">Change password</h3>
+ <div class="row"><input id="op" type="password" placeholder="Old password"><button class="g" id="so">👁 Show</button></div>
+ <div class="mu" id="cur" style="margin-bottom:10px"></div>
+ <input id="np" type="password" placeholder="New password" style="margin-bottom:10px">
+ <input id="cf" type="password" placeholder="Confirm new password" style="margin-bottom:10px">
+ <div id="msg" style="color:#dc2626;margin-bottom:8px"></div>
+ <div class="row"><button id="up">Update password</button><button class="g" id="cc">Cancel</button></div></div>`;
+ document.body.appendChild(m);
+ const q=s=>m.querySelector(s);
+ q('#so').onclick=()=>{const show=q('#op').type=='password';['#op','#np','#cf'].forEach(i=>q(i).type=show?'text':'password');q('#so').textContent=show?'🙈 Hide':'👁 Show';q('#cur').textContent=show?'Current password: '+cur:''};
+ q('#cc').onclick=()=>m.remove();
+ q('#up').onclick=()=>{const o=q('#op').value,n=q('#np').value,c=q('#cf').value,msg=q('#msg');
+  if(o!==cur)return msg.textContent='Old password is incorrect';
+  if(!n)return msg.textContent='Enter a new password';
+  if(n!==c)return msg.textContent='New passwords do not match';
+  acc[user]=btoa(n);LS.set('ft_accounts',acc);msg.style.color='#16a34a';msg.textContent='Password updated ✔';setTimeout(()=>m.remove(),900)};
+}
+const PAL=['#2563eb','#16a34a','#f59e0b','#dc2626','#8b5cf6','#0891b2','#db2777','#65a30d'];
+function dash(){
+ const ps=db.projects,tot=ps.reduce((a,p)=>a+count(p),0),max=Math.max(1,...ps.map(count));
+ let acc=0;const seg=ps.map((p,i)=>{const c=count(p),s=acc;acc+=tot?c/tot*100:0;return `${PAL[i%8]} ${s}% ${acc}%`}).join(',');
+ $('#main').innerHTML=`<div class="grid"><div class="card"><div class="mu">Total flight tests updated</div><div class="stat">${tot}</div></div>
+ <div class="card"><div class="mu">Projects</div><div class="stat">${ps.length}</div></div>
+ <div class="card"><div class="mu">Saved sheets</div><div class="stat">${ps.reduce((a,p)=>a+p.sheets.filter(s=>s.saved).length,0)}</div></div></div>
+ ${ps.length?`<div class="grid"><div class="card"><h3>Flight tests per project (bar)</h3>${ps.map((p,i)=>`<div class="bar"><span class="l">${esc(p.name)}</span><div class="f" style="width:${count(p)/max*60}%;background:${PAL[i%8]}"></div><b>${count(p)}</b></div>`).join('')}</div>
+ <div class="card"><h3>Share of tests (pie)</h3><div class="pie" style="background:${tot?`conic-gradient(${seg})`:'var(--bd)'}"></div><div class="lg">${ps.map((p,i)=>`<i style="background:${PAL[i%8]}"></i>${esc(p.name)} (${count(p)})`).join('')}</div></div></div>`:'<div class="card mu">No projects yet. Create one in the Flight Tests module.</div>'}`;
+}
+function ft(){
+ const p=db.projects.find(x=>x.id==pid);
+ if(!p){
+  $('#main').innerHTML=`<div class="row"><input id="pn" placeholder="New project name (e.g. sri)"><button id="add">Add project</button></div><div class="grid">${db.projects.map(p=>`<div class="card"><h3>${esc(p.name)}</h3><div class="mu">${p.sheets.filter(s=>s.saved).length} saved sheets · ${count(p)} flight tests</div><div class="row" style="margin:10px 0 0"><button data-o="${p.id}">Open</button><button class="g d" style="color:#dc2626" data-x="${p.id}">Delete</button></div></div>`).join('')||'<div class="card mu">No projects yet.</div>'}</div>`;
+  $('#add').onclick=()=>{const n=$('#pn').value.trim();if(!n)return;db.projects.push({id:uid(),name:n,extra:[],sheets:[{id:uid(),name:'Sheet 1',rows:[emptyRow()],saved:false}]});save();ft()};
+  document.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{pid=b.dataset.o;sid=null;ft()});
+  document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{if(confirm('Delete this project and all its sheets?')){db.projects=db.projects.filter(x=>x.id!=b.dataset.x);save();ft()}});
+  return}
+ const s=p.sheets.find(x=>x.id==sid)||p.sheets[0];sid=s.id;
+ const cols=[...COLS,...p.extra.map(e=>[e,e])];
+ $('#main').innerHTML=`<div class="row"><button class="g" id="bk">← Projects</button><h2 style="margin:0">${esc(p.name)}</h2></div>
+ <div class="tabs">${p.sheets.map(x=>`<button class="${x.id==sid?'on':''}" data-s="${x.id}">${esc(x.name)} ${x.saved?'✔':'•'}</button>`).join('')}<button id="ns">+ New sheet</button></div>
+ <div class="row"><button id="ar">+ Add row</button><button id="sv">💾 Save sheet</button><button class="g" id="ac">+ Add parameter column</button><button class="g" id="ex">⬇ Export project (CSV)</button><span class="mu">${s.saved?'Saved':'Unsaved changes'}</span></div>
+ <div class="tw"><table><thead><tr><th>#</th>${cols.map(c=>`<th>${esc(c[1])}</th>`).join('')}<th></th></tr></thead><tbody>${s.rows.map((r,i)=>`<tr><td>${i+1}</td>${cols.map(c=>cell(r,c,i)).join('')}<td><button class="g" data-rm="${i}">✕</button></td></tr>`).join('')}</tbody></table></div>`;
+ $('#bk').onclick=()=>{pid=null;ft()};
+ document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{sid=b.dataset.s;ft()});
+ $('#ns').onclick=()=>{const n={id:uid(),name:'Sheet '+(p.sheets.length+1),rows:[emptyRow()],saved:false};p.sheets.push(n);sid=n.id;save();ft()};
+ $('#ar').onclick=()=>{s.rows.push(emptyRow());ft()};
+ $('#sv').onclick=()=>{s.saved=true;save();ft()};
+ $('#ac').onclick=()=>{const n=prompt('New parameter name');if(n&&!cols.some(c=>c[0]==n)){p.extra.push(n);save();ft()}};
+ $('#ex').onclick=()=>exp(p,cols);
+ document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{s.rows.splice(+b.dataset.rm,1);if(!s.rows.length)s.rows.push(emptyRow());ft()});
+ document.querySelectorAll('[data-k]').forEach(el=>{
+  if(el.type=='file')el.onchange=()=>{const f=el.files[0];if(!f)return;const i=+el.dataset.r,k=el.dataset.k;
+   if(k=='log'){s.rows[i][k]={name:f.name};s.saved=false;ft();return}
+   if(f.size>300000)return alert('Parameter file too large to store (max 300 KB)');
+   const fr=new FileReader();fr.onload=()=>{s.rows[i][k]={name:f.name,text:fr.result};s.saved=false;ft()};fr.readAsText(f)};
+  else el.onchange=()=>{s.rows[+el.dataset.r][el.dataset.k]=el.value;s.saved=false};
+ });
+ document.querySelectorAll('[data-v]').forEach(a=>a.onclick=()=>{const [i,k]=a.dataset.v.split('|'),f=s.rows[+i][k];
+  const m=document.createElement('div');m.className='modal';m.innerHTML=`<div><div class="row"><b style="flex:1">${esc(f.name)}</b><button class="g" id="cl">Close</button></div><pre>${f.text!=null?esc(f.text):'Log file name only is stored (contents are not kept).'}</pre></div>`;
+  document.body.appendChild(m);m.onclick=e=>{if(e.target==m||e.target.id=='cl')m.remove()}});
+}
+function cell(r,c,i){
+ const [k,,t,o]=c,v=r[k]??'',a=`data-r="${i}" data-k="${esc(k)}"`;
+ if(t=='sel')return `<td><select ${a}>${o.map(x=>`<option ${x==v?'selected':''}>${x}</option>`).join('')}</select></td>`;
+ if(t=='file')return `<td>${v?`<a class="lk" data-v="${i}|${k}">${esc(v.name)}</a> `:''}<input type="file" ${a} style="min-width:190px"></td>`;
+ return `<td><input type="${t||'text'}" ${a} value="${esc(v)}"></td>`;
+}
+function exp(p,cols){
+ const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const lines=[['Sheet',...cols.map(c=>c[1])].map(q).join(',')];
+ p.sheets.forEach(s=>s.rows.filter(filled).forEach(r=>lines.push([s.name,...cols.map(c=>c[2]=='file'?(r[c[0]]?.name||''):r[c[0]])].map(q).join(','))));
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));a.download=p.name+'_flight_tests.csv';document.body.appendChild(a);a.click();a.remove();
+}
+function notes(){
+ $('#main').innerHTML=`<div class="card"><textarea id="nt" rows="3" placeholder="Write a quick note…"></textarea><div class="row" style="margin:8px 0 0"><button id="an">Add note</button></div></div>
+ <div class="tl">${[...db.notes].reverse().map(n=>`<div class="n"><div class="mu">${new Date(n.t).toLocaleString()}</div>${esc(n.x).replace(/\n/g,'<br>')}<div><a class="lk mu" data-d="${n.id}">delete</a></div></div>`).join('')||'<div class="mu">No notes yet.</div>'}</div>`;
+ $('#an').onclick=()=>{const x=$('#nt').value.trim();if(!x)return;db.notes.push({id:uid(),t:Date.now(),x});save();notes()};
+ document.querySelectorAll('[data-d]').forEach(a=>a.onclick=()=>{db.notes=db.notes.filter(n=>n.id!=a.dataset.d);save();notes()});
+}
+if(user)load();render();
+</script></body></html>
